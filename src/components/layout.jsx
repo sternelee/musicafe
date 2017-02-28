@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import Playlist from './userPlaylist';
+import Messages from './messages';
+// import Login from './login';
 import Search from './searchInput';
 import Player from './player';
 import Footer from './footer';
@@ -18,8 +20,8 @@ const styles = {
     backgroundPosition: '50%',
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
-    filter: 'blur(90px)',
-    WebkitFilter: 'blur(90px)',
+    // filter: 'blur(90px)',
+    // WebkitFilter: 'blur(90px)',
     opacity: 0.6,
     height: '100%',
     width: '100%',
@@ -108,7 +110,7 @@ class Layout extends Component {
             <div style={styles.navbarInner}>
               <div style={styles.logo} onClick={this.pushToStart}>
                 <img src={logo} alt={'logo'} width={60} height={60} />
-                <h1 style={styles.slogan}>musicafe 音乐咖</h1>
+                <h1 style={styles.slogan}>Ling + 倾听你</h1>
               </div>
               <Search />
             </div>
@@ -118,6 +120,7 @@ class Layout extends Component {
             <Footer />
           </div>
         </div>
+        <Messages />
       </div>
     )
   }

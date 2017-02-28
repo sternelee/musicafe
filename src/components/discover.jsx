@@ -3,7 +3,7 @@ import Loading from './loading';
 import { connect } from 'react-redux';
 import { browserHistory } from 'react-router';
 import { Carousel, Pagination } from 'antd';
-const URL = 'https://musicafe.co/suggestion.json';
+const URL = './suggestion.json';
 
 const styles = {
   carouselBox: {
@@ -118,7 +118,7 @@ class Dicover extends Component {
           carouselItems.push(randomItem);
           albumItems = albumItems.filter(i => i.id !== randomItem.id);
         }
-        console.log(carouselItems, albumItems);
+        // console.log(carouselItems, albumItems);
 
         /**
          * combine other albums and playlist for the suggestion

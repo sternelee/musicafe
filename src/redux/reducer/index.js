@@ -18,6 +18,14 @@ const playlist = (state = initPlaylist, action) => {
           songs: action.songs || []
         }
       };
+    case 'SYNC_NEW_LIST':
+      return {
+        ...state,
+        [action.playlistID]: {
+          name: action.name,
+          songs: action.songs || []
+        }
+      };
     case 'DELETE_ONE_LIST':
       let newState = {...state};
       delete newState[action.playlistID];
@@ -48,7 +56,7 @@ const playlist = (state = initPlaylist, action) => {
   }
 }
 
-const playStatus = (state = {index: 0, playlistID: 0, status: 'stop', switchType: 'list'}, action) => {
+const playStatus = (state = {index: 0, playlistID: 0, status: 'stop',sendVisible:false, switchType: 'list'}, action) => {
   switch (action.type) {
     case 'PLAY_STATUS_UPDATE_INDEX':
       console.log('will update song index', action.index);
@@ -60,6 +68,11 @@ const playStatus = (state = {index: 0, playlistID: 0, status: 'stop', switchType
       return {
         ...state,
         status: action.status,
+      }
+    case 'SEND_MESSAGE_STATUS':
+      return {
+        ...state,
+        sendVisible: action.status,
       }
     case 'PLAY_STATUS_UPDATE_PLAYLIST_ID':
       return {

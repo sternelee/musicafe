@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import { Icon } from 'antd';
 var wave = require('../../public/wave.gif');
 var nowave = require('../../public/nowave.png');
+import socketClient from './socketClient';
+var socket = require('socket.io-client')(socketClient);
 /* eslint-disable */
 const styles = {
   row: {
@@ -65,13 +67,25 @@ class PlaylistDetail extends React.Component {
        this.props.changeSong(listID, this.props.currentIndex-1);
     }
     this.props.deleteSong(listID, songID);
+
+    const that = this;
+    setTimeout(function(){
+      socket.emit('play',{
+          playlist: that.props.playlist[0]
+        });
+    },100);
   }
 
-  changeSong(listId, songIndex){
-    this.props.changeSong(listId, songIndex);
+  changeSong(listID, songIndex){
+    this.props.changeSong(listID, songIndex);
     if(this.props.playStatus !== 'play'){
       this.props.changePlayStatus('play');
     }
+    const that = this;
+    socket.emit('play',{
+        // playlist: that.props.playlist[0],
+        songIndex: songIndex
+      });
   }
 
   render () {
@@ -86,17 +100,18 @@ class PlaylistDetail extends React.Component {
       } else {
         playing = null;
       }
-      list.unshift(
+      list.push(
         <div style={{...styles.row,
             borderTop: '1px solid rgba(200, 200, 200, 0.15)'
           }}
           key={index}
+          data-id={index}
         >
           <div
             style={styles.left}
             onClick={() => this.changeSong(id, index)}
           >
-            {`${data.length - index}. ${item.name} - ${item.artists.map(i => i.name).join('&')}`}
+            {`${index + 1}. ${item.name} - ${item.artists.map(i => i.name).join('&')}`}
             {playing}
           </div>
           <div style={styles.right}>

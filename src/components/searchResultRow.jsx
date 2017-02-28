@@ -3,6 +3,9 @@ import {connect} from 'react-redux';
 import { Pagination, notification } from 'antd';
 import api from '../redux/action/fetch';
 import { browserHistory } from 'react-router';
+import socketClient from './socketClient';
+var socket = require('socket.io-client')(socketClient);
+
 const name = {
   qq: 'QQ音乐',
   netease: '网易云音乐',
@@ -141,6 +144,12 @@ class SearchResultRow extends Component {
 
   addSong(vendor, data){
     this.props.addSong({...data, vendor});
+    const that = this;
+    setTimeout(function(){
+      socket.emit('play',{
+          playlist: that.props.playlist[0]
+        });
+    },100);
   }
 
   sliceList(array){

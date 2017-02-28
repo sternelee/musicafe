@@ -3,6 +3,8 @@ import { Icon, notification } from 'antd';
 import { connect } from 'react-redux';
 import { getSongURL } from '../redux/action/fetch';
 import { browserHistory } from 'react-router';
+import socketClient from './socketClient';
+var socket = require('socket.io-client')(socketClient);
 
 const styles = {
   row: {
@@ -109,6 +111,12 @@ class SongListRow extends Component{
       }
     }
     this.props.addSong({...data, vendor});
+    const that = this;
+    setTimeout(function(){
+      socket.emit('play',{
+          playlist: that.props.playlist[0]
+        });
+    },100);
   }
 
   downloadSong(vendor, songID, albumID, songName, needPay){

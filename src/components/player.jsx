@@ -2,8 +2,23 @@ import React, { Component } from 'react'
 import { Howl } from 'howler';
 import { connect } from 'react-redux';
 import { getSongURL } from '../redux/action/fetch';
-import { Icon, notification, Slider } from 'antd';
-import Shuffle from 'react-icons/io/ios-shuffle-strong';
+import { notification, Slider } from 'antd';
+import socketClient from './socketClient';
+var socket = require('socket.io-client')(socketClient);
+// socket.on('connect', function(){
+//   notification.open({
+//       message: '连接成功~',
+//       description: '快往歌单里面添加歌曲吧!',
+//     });
+// });
+// socket.on('disconnect', function(){
+//   notification.open({
+//       message: '退出连接了~',
+//       description: '你自个听吧!',
+//     });
+// });
+
+import './player.css';
 
 const styles = {
   buttonControl: {
@@ -57,6 +72,8 @@ class Player extends Component{
     this.getsongPosition = this.getsongPosition.bind(this);
     this.changeSongPosition = this.changeSongPosition.bind(this);
     this.changeSwitchType = this.changeSwitchType.bind(this);
+    this.sendMessage = this.sendMessage.bind(this);
+    this.changeSongList = this.changeSongList.bind(this);
   }
 
   componentWillMount(){
@@ -89,11 +106,32 @@ class Player extends Component{
     if(this.props.playStatus === 'play'){
       let songs = this.props.playlist[this.props.playlistID].songs;
       if(songs && songs.length > 0){
+        console.log(this.props.songIndex);
         this.renderSong(songs[this.props.songIndex].vendor, songs[this.props.songIndex].id, songs[this.props.songIndex].album.id);
       }
     }
+    const that = this;
+    socket.on('play', function(msg){
+      if(msg.playlist){
+        that.changeSongList(msg.playlist);
+      }
+      if(msg.songIndex > -1){
+        that.props.updateSongIndex(msg.songIndex);
+      }
+      if(msg.songPosition){
+        console.log(msg.songPosition);
+        // that.player.seek(msg.songPosition);
+        // that.setState({
+        //   songPosition: msg.songPosition
+        // });
+      }
+      if(msg.switchType){
+        const switchType = msg.switchType === 'list' ? 'random' : 'list';
+        that.props.changeSwitchType(switchType);
+      } 
+    });
   }
-
+  
   renderSong(vendor, id, albumid){
     /**
      *  first delete the player instance in exist
@@ -103,7 +141,11 @@ class Player extends Component{
         songLength: '--',
         songPosition: '--',
       })
-      this.player.unload();
+      // unload() 并没有停止当前，是个bug
+      this.player.pause();
+      // this.player.unload();
+      // console.log(this.player)
+      // console.log('清除当前');
       this.player = null;
     }
 
@@ -158,14 +200,25 @@ class Player extends Component{
       let nextIndex = indexs[Math.floor(Math.random()*indexs.length)];
       this.props.updateSongIndex(nextIndex);
     }
+    if(this.props.switchType === 'one'){
+      if(list.length === this.props.songIndex + 1){
+        this.props.updateSongIndex(0);
+      } else {
+        this.props.updateSongIndex(this.props.songIndex);
+      };
+    }
   }
 
   changeSwitchType(){
     const type = this.props.switchType === 'list' ? 'random' : 'list';
+    // const type = this.props.switchType === 'list' ? 'one' : ('one' ? 'random' : 'list');
     this.props.changeSwitchType(type);
     if(localStorage){
       localStorage.setItem('switchType', type);
     }
+    socket.emit('play',{
+      switchType:this.props.switchType,
+    });
   }
 
   pause(){
@@ -190,6 +243,16 @@ class Player extends Component{
         });
       }
     }
+    // 此时的状态还是前一个
+    const that = this;
+    if(this.props.playStatus === 'pause'){
+      socket.emit('play',{
+        playlist: that.props.playlist[0],
+        songPosition: that.state.songPosition
+      });
+    }
+    
+
   }
 
   formatTime(value){
@@ -215,7 +278,10 @@ class Player extends Component{
     }
     this.setState({
       songPosition: sec
-    })
+    });
+    // socket.emit('play',{
+    //   songPosition: sec,
+    // });
   }
 
   /**
@@ -240,7 +306,29 @@ class Player extends Component{
     }
   }
 
+  sendMessage(){
+    this.props.sendMessage(true);
+  }
+
+  changeSongList(playlist){
+    this.props.changeSongList(playlist);
+    // 更新列表
+  }
+
   render(){
+    // var switchTypeOn = null;
+    // const switchType = this.props.switchType;
+    // switch(switchType){
+    //   case 'one':
+    //     switchTypeOn = `<i className="iconfont icon-loop1" />`;
+    //     break;
+    //   case 'random':
+    //     switchTypeOn = `<i className="iconfont icon-loop-random" />`;
+    //     break;
+    //   default:
+    //     switchTypeOn = `<i className="iconfont icon-loop" />`;
+    // }
+
     return (
       <div className="audio-player">
         <div style={styles.slideControl}>
@@ -262,22 +350,28 @@ class Player extends Component{
           </div>
         </div>
         <div style={styles.buttonControl}>
-          <div style={styles.button} onClick={this.changeSwitchType}>
-            {
+          <div style={styles.button} title="歌词">
+            <i className="iconfont icon-lyrics" />
+          </div>
+          <div style={styles.button} onClick={this.changeSwitchType} title={this.props.switchType === 'list' ? "列表循环" : "随机循环"}>
+            { 
               this.props.switchType === 'list'
-              ? <Icon type="retweet" />
-              : <Shuffle />
+              ? <i className="iconfont icon-loop" />
+              : <i className="iconfont icon-loop-random" />
             }
           </div>
-          <div style={styles.button} onClick={this.pause}>
+          <div style={styles.button} onClick={this.pause} title={this.props.playStatus !== 'play' ? "播放" : "暂停"}>
             {
               this.props.playStatus !== 'play'
-              ? <Icon type='right' />
-              : <Icon type='pause' />
+              ? <i className="iconfont icon-play" />
+              : <i className="iconfont icon-pause" />
             }
           </div>
-          <div style={styles.button} onClick={this.next}>
-            <Icon type="swap-right" />
+          <div style={styles.button} onClick={this.next} title="下一首">
+            <i className="iconfont icon-next" />
+          </div>
+          <div style={styles.button} onClick={this.sendMessage} title="发弹幕">
+            <i className="iconfont icon-wxin" />
           </div>
         </div>
       </div>
@@ -305,6 +399,12 @@ const mapDispatchToProps = (dispatch) => {
     },
     changeSwitchType: (type) => {
       dispatch({type: 'CHANGE_SWITCH_TYPE', switchType: type})
+    },
+    changeSongList: (status) => {
+      dispatch({type: 'SYNC_NEW_LIST',playlistID: 0, name: status.name, songs: status.songs})
+    },
+    sendMessage: (status) => {
+      dispatch({type: 'SEND_MESSAGE_STATUS', status})
     }
   }
 }

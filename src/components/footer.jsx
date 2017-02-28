@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux';
 import Checkbox from './checkbox';
-import Heart from 'react-icons/fa/heart-o';
+import { Icon } from 'antd';
 
 const styles = {
   left: {
@@ -55,8 +55,8 @@ class Footer extends Component {
     return(
       <div className="footer">
         <div style={styles.left}>
-          made with <Heart className="heart" /> by lock |
-          <a style={{marginLeft: '5px'}} href="https://github.com/LIU9293/musicafe" target="_blank">
+          made with <Icon type="heart" /> by lock |
+          <a style={{marginLeft: '5px'}} href="https://github.com/sternelee/musicafe" target="_blank">
             github
           </a>
         </div>
